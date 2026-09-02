@@ -1,0 +1,88 @@
+version: "3"
+
+set: [errexit, nounset, pipefail]
+
+vars:
+  GO: '{{.GO | default "go"}}'
+  GOLANGCI_LINT: '{{.GOLANGCI_LINT | default "golangci-lint"}}'
+  COVERPROFILE: '{{.COVERPROFILE | default "coverage.out"}}'
+  COVERHTML: '{{.COVERHTML | default "coverage.html"}}'
+
+tasks:
+  default:
+    desc: Run the full check suite (lint, generated-code drift, tests).
+    cmds:
+      - task: check
+
+  check:
+    desc: Run lint, generated-code drift and tests.
+    cmds:
+      - task: lint
+      - task: generate-drift
+      - task: test
+
+  test:
+    desc: Run the full test suite with the race detector and shuffled order.
+    cmds:
+      - "{{.GO}} test -race -shuffle=on ./..."
+
+  test:ci:
+    desc: Run the test suite and write a coverage profile for CI.
+    cmds:
+      - "{{.GO}} test -race -shuffle=on -coverprofile={{.COVERPROFILE}} ./..."
+
+  lint:
+    desc: Run the gofmt check, go vet and golangci-lint.
+    cmds:
+      - task: fmt
+      - task: vet
+      - "{{.GOLANGCI_LINT}} run"
+
+  fmt:
+    desc: Fail if any file is not gofmt-clean.
+    cmds:
+      - |
+        unformatted="$(gofmt -l .)"
+        if [ -n "$unformatted" ]; then
+          echo "gofmt: the files below are not formatted; run 'gofmt -w .'"
+          echo "$unformatted"
+          exit 1
+        fi
+
+  vet:
+    desc: Run go vet over all packages.
+    cmds:
+      - "{{.GO}} vet ./..."
+
+  generate:
+    desc: Run go generate over all packages.
+    cmds:
+      - "{{.GO}} generate ./..."
+
+  generate-drift:
+    desc: Fail if go generate changes any tracked generated (*_gen.go) file.
+    cmds:
+      - task: generate
+      - |
+        if ! git diff --quiet -- ':(glob)**/*_gen.go'; then
+          echo "go generate changed tracked generated files; regenerate and commit:"
+          git --no-pager diff --stat -- ':(glob)**/*_gen.go'
+          exit 1
+        fi
+
+  tidy:
+    desc: Tidy go.mod and go.sum.
+    cmds:
+      - "{{.GO}} mod tidy"
+
+  cover:
+    desc: Write a coverage profile and render it as HTML.
+    cmds:
+      - "{{.GO}} test -race -shuffle=on -coverprofile={{.COVERPROFILE}} -covermode=atomic ./..."
+      - "{{.GO}} tool cover -html={{.COVERPROFILE}} -o {{.COVERHTML}}"
+      - 'echo "coverage report: {{.COVERHTML}}"'
+
+  clean:
+    desc: Remove build and coverage artifacts.
+    cmds:
+      - "rm -rf dist {{.COVERPROFILE}} {{.COVERHTML}}"

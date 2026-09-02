@@ -1,0 +1,38 @@
+version: 2
+
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+      include: scope
+    labels: [dependencies, go]
+    groups:
+      gomod-minor-patch:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: [minor, patch]
+      gomod-security:
+        applies-to: security-updates
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(ci)'
+    labels: [dependencies, github-actions]
+    groups:
+      github-actions:
+        patterns: ['*']

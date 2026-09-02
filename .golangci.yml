@@ -1,0 +1,136 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  allow-parallel-runners: true
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - gosec
+    - misspell
+    - revive
+    - forbidigo
+    - gocritic
+    - nolintlint
+    - errorlint
+    - exhaustive
+    - unconvert
+    - unparam
+    - prealloc
+    - predeclared
+    - thelper
+    - tparallel
+    - testifylint
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+
+    staticcheck:
+      checks:
+        - all
+
+    misspell:
+      locale: US
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam
+        - rangeValCopy
+        - unnamedResult
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+        - name: var-naming
+
+    forbidigo:
+      analyze-types: true
+      forbid:
+        # float64 ban is a review rule; see CLAUDE.md
+        - pattern: '^strconv\.ParseFloat$'
+          msg: 'no binary floats: parse monetary/quantity values as decimal strings or integers'
+        - pattern: '^strconv\.FormatFloat$'
+          msg: 'no binary floats: format monetary/quantity values from decimal or integer types'
+        - pattern: '^strconv\.AppendFloat$'
+          msg: 'no binary floats: format monetary/quantity values from decimal or integer types'
+        - pattern: '^math\.Round$'
+          msg: 'no binary floats: round with decimal/integer arithmetic, not math.Round'
+        - pattern: '^math\.Floor$'
+          msg: 'no binary floats: round with decimal/integer arithmetic, not math.Floor'
+        - pattern: '^math\.Ceil$'
+          msg: 'no binary floats: round with decimal/integer arithmetic, not math.Ceil'
+        - pattern: '^math\.Abs$'
+          msg: 'no binary floats: use decimal/integer absolute value'
+
+  exclusions:
+    generated: lax
+    rules:
+      - path: '_gen\.go$'
+        linters:
+          - gocritic
+          - gosec
+          - prealloc
+          - revive
+          - unparam
+      - path: '_test\.go$'
+        linters:
+          - dupl
+          - errcheck
+          - gosec
+          - unparam
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
