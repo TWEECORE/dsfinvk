@@ -1,0 +1,4 @@
+* text=auto
+schema/*.xml  -text
+schema/*.dtd  -text
+testdata/**   -text
